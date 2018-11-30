@@ -165,8 +165,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 let express = __webpack_require__(6);
 let app = express();
+
+let swaggerUi = __webpack_require__(7),
+    swaggerDocument = __webpack_require__(8);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 let pg = __webpack_require__(2);
-let fs = __webpack_require__(7);
+let fs = __webpack_require__(9);
 
 let qm = new __WEBPACK_IMPORTED_MODULE_1__QueryMaker__["a" /* default */](app, pg, fs);
 Object(__WEBPACK_IMPORTED_MODULE_0__globalBus__["a" /* default */])().qm = qm;
@@ -186,12 +192,12 @@ app.use(function(req, res, next) {
 });
 
 // HELLO NODE API
-app.get('/', (request, response) => {
+app.get('/api/', (request, response) => {
     response.end("HELLO NODE API");
 });
 
 // Описываем функцию для получения списка всех людей в БД
-app.get('/get_all_records', (request, response) => {
+app.get('/api/get_all_records', (request, response) => {
     console.log("GET ALL RECORDS");
     let ans = {
         arr: []
@@ -210,7 +216,7 @@ app.get('/get_all_records', (request, response) => {
 });
 
 // Описываем функцию для добавления человека в БД
-app.post('/add_one_record', (request, response) => {
+app.post('/api/add_one_record', (request, response) => {
     console.log("POST ONE RECORD");
     let bigString = "";
     request.on('data', (data) => {
@@ -291,6 +297,18 @@ module.exports = require("express");
 
 /***/ }),
 /* 7 */
+/***/ (function(module, exports) {
+
+module.exports = require("swagger-ui-express");
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports) {
+
+module.exports = {"swagger":"2.0","info":{"version":"1.0.0","title":"Yet Another Node.js Blogg Application API","description":"Yet Another Node.js Blogg Application API","license":{"name":"MIT","url":"https://opensource.org/licenses/MIT"}},"host":"localhost:5333","basePath":"/api","tags":[{"name":"Users","description":"API for users in the system"}],"schemes":["http"],"consumes":["application/json"],"produces":["application/json"],"paths":{"/":{"get":{"tags":["Hello"],"summary":"Hello Node API","responses":{"200":{"description":"OK","schema":{}}}}},"/users":{"post":{"tags":["Users"],"description":"Create new user in system","parameters":[{"name":"user","in":"body","description":"User that we want to create","schema":{"$ref":"#/definitions/User"}}],"produces":["application/json"],"responses":{"200":{"description":"New user is created","schema":{"$ref":"#/definitions/User"}}}},"get":{"tags":["Users"],"summary":"Get all users in system","responses":{"200":{"description":"OK","schema":{"$ref":"#/definitions/Users"}}}}},"/users/{userId}":{"parameters":[{"name":"userId","in":"path","required":true,"description":"ID of user that we want to find","type":"string"}],"get":{"tags":["Users"],"summary":"Get user with given ID","responses":{"200":{"description":"User is found","schema":{"$ref":"#/definitions/User"}}}},"delete":{"summary":"Delete user with given ID","tags":["Users"],"responses":{"200":{"description":"User is deleted","schema":{"$ref":"#/definitions/User"}}}},"put":{"summary":"Update user with give ID","tags":["Users"],"parameters":[{"name":"user","in":"body","description":"User with new values of properties","schema":{"$ref":"#/definitions/User"}}],"responses":{"200":{"description":"User is updated","schema":{"$ref":"#/definitions/User"}}}}}},"definitions":{"User":{"required":["email","_id"],"properties":{"_id":{"type":"string","uniqueItems":true},"email":{"type":"string","uniqueItems":true},"lastName":{"type":"string"},"firstName":{"type":"string"}}},"Users":{"type":"array","$ref":"#/definitions/User"}}}
+
+/***/ }),
+/* 9 */
 /***/ (function(module, exports) {
 
 module.exports = require("fs");

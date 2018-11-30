@@ -7,6 +7,12 @@ import debugLog from "./debugLog";
 
 let express = require("express");
 let app = express();
+
+let swaggerUi = require('swagger-ui-express'),
+    swaggerDocument = require('./../swagger.json');
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 let pg = require('pg');
 let fs = require('fs');
 
@@ -28,12 +34,12 @@ app.use(function(req, res, next) {
 });
 
 // HELLO NODE API
-app.get('/', (request, response) => {
+app.get('/api/hello', (request, response) => {
     response.end("HELLO NODE API");
 });
 
 // Описываем функцию для получения списка всех людей в БД
-app.get('/get_all_records', (request, response) => {
+app.get('/api/get_all_records', (request, response) => {
     console.log("GET ALL RECORDS");
     let ans = {
         arr: []
@@ -52,7 +58,7 @@ app.get('/get_all_records', (request, response) => {
 });
 
 // Описываем функцию для добавления человека в БД
-app.post('/add_one_record', (request, response) => {
+app.post('/api/add_one_record', (request, response) => {
     console.log("POST ONE RECORD");
     let bigString = "";
     request.on('data', (data) => {
