@@ -8,10 +8,12 @@ export default class QueryMaker {
         this.pg = pg;
         this.fs = fs;
 
+        // sudo -u postgres psql
+        // CREATE DATABASE my_1;
         const pool = new pg.Pool({
             user: 'postgres',
             host: 'localhost',
-            database: 'my_database',
+            database: 'my_1',
             password: '12345',
             port: 5432
         });

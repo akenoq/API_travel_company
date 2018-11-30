@@ -39,13 +39,13 @@ app.get('/api/hello', (request, response) => {
 });
 
 // Описываем функцию для получения списка всех людей в БД
-app.get('/api/get_all_records', (request, response) => {
+app.get('/api/users', (request, response) => {
     console.log("GET ALL RECORDS");
     let ans = {
         arr: []
     };
 
-    qm.request("SELECT * FROM people ORDER BY man_id ASC;", ans,
+    qm.request("SELECT * FROM people ORDER BY u_id ASC;", ans,
         (err) => {
             debugLog("err api");
             debugLog(err);
@@ -57,8 +57,10 @@ app.get('/api/get_all_records', (request, response) => {
     });
 });
 
+// app.get('/api/users/:u_id', () => {});
+
 // Описываем функцию для добавления человека в БД
-app.post('/api/add_one_record', (request, response) => {
+app.post('/api/users', (request, response) => {
     console.log("POST ONE RECORD");
     let bigString = "";
     request.on('data', (data) => {
@@ -67,26 +69,40 @@ app.post('/api/add_one_record', (request, response) => {
         const dataObj = JSON.parse(bigString);
 
         const nickname = dataObj.nickname;
-        const age = dataObj.age;
+        const password = dataObj.password;
+        const firstname = dataObj.firstname;
+        const lastname = dataObj.lastname;
+        const citizenship = dataObj.citizenship;
+        const phone = dataObj.phone;
 
         let ans = {
             arr: []
         };
 
-        qm.request("SELECT * FROM people WHERE man_nickname = '" + nickname + "';", ans, () => {
-            if(ans.arr.length > 0) {
-                const answer = {
-                    message: "NO_ADDING"
-                };
-                response.end(JSON.stringify(answer));
-            } else {
-                qm.request("INSERT INTO people (man_nickname, man_age) VALUES ('" + nickname + "', " + age + ");", {}, () => {
+        qm.request(`SELECT * FROM people WHERE u_nickname = '${nickname}';`, ans,
+            (err) => {
+                debugLog("NO_ADDING_ERROR_SELECT");
+                debugLog(err);
+            },
+            () => {
+                if(ans.arr.length > 0) {
                     const answer = {
-                        message: "ADDING_SUCCESS"
+                        message: "NO_ADDING_ALREADY_EXIST"
                     };
                     response.end(JSON.stringify(answer));
-                });
-            }
+                } else {
+                    qm.request(`INSERT INTO people (u_nickname, u_password) VALUES ('${nickname}', '${password}');`, {},
+                        (err) => {
+                            debugLog("NO_ADDING_ERROR_INSERT");
+                            debugLog(err);
+                        },
+                        () => {
+                        const answer = {
+                            message: "ADDING_SUCCESS"
+                        };
+                        response.end(JSON.stringify(answer));
+                    });
+                }
         });
     });
 });

@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 3);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -103,57 +103,9 @@ module.exports = require("pg");
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__debugLog__ = __webpack_require__(0);
-
-
-
-
-class QueryMaker {
-    constructor(app, pg, fs) {
-        this.app = app;
-        this.pg = pg;
-        this.fs = fs;
-
-        const pool = new pg.Pool({
-            user: 'postgres',
-            host: 'localhost',
-            database: 'my_database',
-            password: '12345',
-            port: 5432
-        });
-
-        pool.on('error', (err, client) => {
-            __WEBPACK_IMPORTED_MODULE_0__debugLog__["a" /* default */].log("_____POOL_____ERROR_____");
-        });
-
-        this.pool = pool;
-    }
-
-    request(queryString, resultObj, callbackError, callbackResp) {
-        const pool = this.pool;
-        pool.query(queryString, [], (err, res) => {
-            if(err !== null) {
-                Object(__WEBPACK_IMPORTED_MODULE_0__debugLog__["a" /* default */])("callbackError");
-                callbackError(err);
-            } else {
-                Object(__WEBPACK_IMPORTED_MODULE_0__debugLog__["a" /* default */])("callbackNormal");
-                resultObj.arr = res.rows;
-                callbackResp();
-            }
-        });
-    }
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = QueryMaker;
-
-
-/***/ }),
-/* 4 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__globalBus__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__QueryMaker__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__QueryMaker__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__tableCreator__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__debugLog__ = __webpack_require__(0);
 
@@ -192,18 +144,18 @@ app.use(function(req, res, next) {
 });
 
 // HELLO NODE API
-app.get('/api/', (request, response) => {
+app.get('/api/hello', (request, response) => {
     response.end("HELLO NODE API");
 });
 
 // Описываем функцию для получения списка всех людей в БД
-app.get('/api/get_all_records', (request, response) => {
+app.get('/api/users', (request, response) => {
     console.log("GET ALL RECORDS");
     let ans = {
         arr: []
     };
 
-    qm.request("SELECT * FROM people ORDER BY man_id ASC;", ans,
+    qm.request("SELECT * FROM people ORDER BY u_id ASC;", ans,
         (err) => {
             Object(__WEBPACK_IMPORTED_MODULE_3__debugLog__["a" /* default */])("err api");
             Object(__WEBPACK_IMPORTED_MODULE_3__debugLog__["a" /* default */])(err);
@@ -215,8 +167,10 @@ app.get('/api/get_all_records', (request, response) => {
     });
 });
 
+// app.get('/api/users/:u_id', () => {});
+
 // Описываем функцию для добавления человека в БД
-app.post('/api/add_one_record', (request, response) => {
+app.post('/api/users', (request, response) => {
     console.log("POST ONE RECORD");
     let bigString = "";
     request.on('data', (data) => {
@@ -225,29 +179,93 @@ app.post('/api/add_one_record', (request, response) => {
         const dataObj = JSON.parse(bigString);
 
         const nickname = dataObj.nickname;
-        const age = dataObj.age;
+        const password = dataObj.password;
+        const firstname = dataObj.firstname;
+        const lastname = dataObj.lastname;
+        const citizenship = dataObj.citizenship;
+        const phone = dataObj.phone;
 
         let ans = {
             arr: []
         };
 
-        qm.request("SELECT * FROM people WHERE man_nickname = '" + nickname + "';", ans, () => {
-            if(ans.arr.length > 0) {
-                const answer = {
-                    message: "NO_ADDING"
-                };
-                response.end(JSON.stringify(answer));
-            } else {
-                qm.request("INSERT INTO people (man_nickname, man_age) VALUES ('" + nickname + "', " + age + ");", {}, () => {
+        qm.request(`SELECT * FROM people WHERE u_nickname = '${nickname}';`, ans,
+            (err) => {
+                Object(__WEBPACK_IMPORTED_MODULE_3__debugLog__["a" /* default */])("NO_ADDING_ERROR_SELECT");
+                Object(__WEBPACK_IMPORTED_MODULE_3__debugLog__["a" /* default */])(err);
+            },
+            () => {
+                if(ans.arr.length > 0) {
                     const answer = {
-                        message: "ADDING_SUCCESS"
+                        message: "NO_ADDING_ALREADY_EXIST"
                     };
                     response.end(JSON.stringify(answer));
-                });
-            }
+                } else {
+                    qm.request(`INSERT INTO people (u_nickname, u_password) VALUES ('${nickname}', '${password}');`, {},
+                        (err) => {
+                            Object(__WEBPACK_IMPORTED_MODULE_3__debugLog__["a" /* default */])("NO_ADDING_ERROR_INSERT");
+                            Object(__WEBPACK_IMPORTED_MODULE_3__debugLog__["a" /* default */])(err);
+                        },
+                        () => {
+                        const answer = {
+                            message: "ADDING_SUCCESS"
+                        };
+                        response.end(JSON.stringify(answer));
+                    });
+                }
         });
     });
 });
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__debugLog__ = __webpack_require__(0);
+
+
+
+
+class QueryMaker {
+    constructor(app, pg, fs) {
+        this.app = app;
+        this.pg = pg;
+        this.fs = fs;
+
+        // sudo -u postgres psql
+        // CREATE DATABASE my_1;
+        const pool = new pg.Pool({
+            user: 'postgres',
+            host: 'localhost',
+            database: 'my_1',
+            password: '12345',
+            port: 5432
+        });
+
+        pool.on('error', (err, client) => {
+            __WEBPACK_IMPORTED_MODULE_0__debugLog__["a" /* default */].log("_____POOL_____ERROR_____");
+        });
+
+        this.pool = pool;
+    }
+
+    request(queryString, resultObj, callbackError, callbackResp) {
+        const pool = this.pool;
+        pool.query(queryString, [], (err, res) => {
+            if(err !== null) {
+                Object(__WEBPACK_IMPORTED_MODULE_0__debugLog__["a" /* default */])("callbackError");
+                callbackError(err);
+            } else {
+                Object(__WEBPACK_IMPORTED_MODULE_0__debugLog__["a" /* default */])("callbackNormal");
+                resultObj.arr = res.rows;
+                callbackResp();
+            }
+        });
+    }
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = QueryMaker;
 
 
 /***/ }),
@@ -256,10 +274,8 @@ app.post('/api/add_one_record', (request, response) => {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = tableCreator;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__QueryMaker__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__globalBus__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__debugLog__ = __webpack_require__(0);
-
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__globalBus__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__debugLog__ = __webpack_require__(0);
 
 
 
@@ -272,19 +288,23 @@ function tableCreator() {
         arr:[]
     };
 
-    Object(__WEBPACK_IMPORTED_MODULE_1__globalBus__["a" /* default */])().qm.request(`
+    Object(__WEBPACK_IMPORTED_MODULE_0__globalBus__["a" /* default */])().qm.request(`
         CREATE TABLE IF NOT EXISTS people (
-            man_id BIGSERIAL PRIMARY KEY,
-            man_nickname TEXT,
-            man_age INTEGER
+            u_id BIGSERIAL PRIMARY KEY,
+            u_nickname TEXT,
+            u_password TEXT,
+            u_firstname TEXT,
+            u_lastname TEXT,
+            u_citizenship TEXT,
+            u_phone TEXT
         );`,
         resultObj,
         (err) => {
-            Object(__WEBPACK_IMPORTED_MODULE_2__debugLog__["a" /* default */])("table creating error");
-            Object(__WEBPACK_IMPORTED_MODULE_2__debugLog__["a" /* default */])(err);
+            Object(__WEBPACK_IMPORTED_MODULE_1__debugLog__["a" /* default */])("table creating error");
+            Object(__WEBPACK_IMPORTED_MODULE_1__debugLog__["a" /* default */])(err);
         },
         () => {
-            Object(__WEBPACK_IMPORTED_MODULE_2__debugLog__["a" /* default */])("table was created");
+            Object(__WEBPACK_IMPORTED_MODULE_1__debugLog__["a" /* default */])("table was created");
         }
     );
 }
@@ -305,7 +325,7 @@ module.exports = require("swagger-ui-express");
 /* 8 */
 /***/ (function(module, exports) {
 
-module.exports = {"swagger":"2.0","info":{"version":"1.0.0","title":"Yet Another Node.js Blogg Application API","description":"Yet Another Node.js Blogg Application API","license":{"name":"MIT","url":"https://opensource.org/licenses/MIT"}},"host":"localhost:5333","basePath":"/api","tags":[{"name":"Users","description":"API for users in the system"}],"schemes":["http"],"consumes":["application/json"],"produces":["application/json"],"paths":{"/":{"get":{"tags":["Hello"],"summary":"Hello Node API","responses":{"200":{"description":"OK","schema":{}}}}},"/users":{"post":{"tags":["Users"],"description":"Create new user in system","parameters":[{"name":"user","in":"body","description":"User that we want to create","schema":{"$ref":"#/definitions/User"}}],"produces":["application/json"],"responses":{"200":{"description":"New user is created","schema":{"$ref":"#/definitions/User"}}}},"get":{"tags":["Users"],"summary":"Get all users in system","responses":{"200":{"description":"OK","schema":{"$ref":"#/definitions/Users"}}}}},"/users/{userId}":{"parameters":[{"name":"userId","in":"path","required":true,"description":"ID of user that we want to find","type":"string"}],"get":{"tags":["Users"],"summary":"Get user with given ID","responses":{"200":{"description":"User is found","schema":{"$ref":"#/definitions/User"}}}},"delete":{"summary":"Delete user with given ID","tags":["Users"],"responses":{"200":{"description":"User is deleted","schema":{"$ref":"#/definitions/User"}}}},"put":{"summary":"Update user with give ID","tags":["Users"],"parameters":[{"name":"user","in":"body","description":"User with new values of properties","schema":{"$ref":"#/definitions/User"}}],"responses":{"200":{"description":"User is updated","schema":{"$ref":"#/definitions/User"}}}}}},"definitions":{"User":{"required":["email","_id"],"properties":{"_id":{"type":"string","uniqueItems":true},"email":{"type":"string","uniqueItems":true},"lastName":{"type":"string"},"firstName":{"type":"string"}}},"Users":{"type":"array","$ref":"#/definitions/User"}}}
+module.exports = {"swagger":"2.0","info":{"version":"1.0.0","title":"Travel Company API","description":"Travel Company API, postgres","license":{"name":"MIT","url":"https://opensource.org/licenses/MIT"}},"host":"localhost:5333","basePath":"/api","tags":[{"name":"Users","description":"API for users in the system"}],"schemes":["http"],"consumes":["application/json"],"produces":["application/json"],"paths":{"/hello":{"get":{"tags":["Hello"],"summary":"Hello Node API","responses":{"200":{"description":"OK","schema":{}}}}},"/users":{"post":{"tags":["Users"],"description":"Create new user in system","parameters":[{"name":"user","in":"body","description":"User that we want to create","schema":{"$ref":"#/definitions/Form"}}],"produces":["application/json"],"responses":{"200":{"description":"New user is created","schema":{"$ref":"#/definitions/User"}}}},"get":{"tags":["Users"],"summary":"Get all users in system","responses":{"200":{"description":"OK","schema":{"$ref":"#/definitions/Users"}}}}},"/users/{userId}":{"parameters":[{"name":"userId","in":"path","required":true,"description":"ID of user that we want to find","type":"string"}],"get":{"tags":["Users"],"summary":"Get user with given ID","responses":{"200":{"description":"User is found","schema":{"$ref":"#/definitions/User"}}}},"delete":{"summary":"Delete user with given ID","tags":["Users"],"responses":{"200":{"description":"User is deleted","schema":{"$ref":"#/definitions/User"}}}},"put":{"summary":"Update user with give ID","tags":["Users"],"parameters":[{"name":"user","in":"body","description":"User with new values of properties","schema":{"$ref":"#/definitions/User"}}],"responses":{"200":{"description":"User is updated","schema":{"$ref":"#/definitions/User"}}}}}},"definitions":{"User":{"required":["u_id","u_nickname","u_password","u_firstname","u_lastname","u_citizenship","u_phone"],"properties":{"u_id":{"type":"integer","uniqueItems":true},"nickname":{"type":"string","uniqueItems":true},"password":{"type":"string"},"lastname":{"type":"string"},"firstname":{"type":"string"},"citizenship":{"type":"string"},"phone":{"type":"string"}}},"Form":{"required":["u_nickname","u_password"],"properties":{"nickname":{"type":"string","uniqueItems":true},"password":{"type":"string"}}},"Users":{"type":"array","$ref":"#/definitions/User"}}}
 
 /***/ }),
 /* 9 */
