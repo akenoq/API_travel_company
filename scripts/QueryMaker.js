@@ -25,16 +25,26 @@ export default class QueryMaker {
         this.pool = pool;
     }
 
-    request(queryString, resultObj, callbackError, callbackResp) {
+    /**
+     * Request with values array to pg
+     * @param queryString - template sql query
+     * @param values - array of parameters for template
+     * @param callbackError
+     * @param callbackResp
+     */
+    request(queryString, values, callbackError, callbackResp) {
         const pool = this.pool;
-        pool.query(queryString, [], (err, res) => {
+        let respObj = {
+            arr: []
+        };
+        pool.query(queryString, values, (err, res) => {
             if(err !== null) {
                 debugLog("callbackError");
                 callbackError(err);
             } else {
                 debugLog("callbackNormal");
-                resultObj.arr = res.rows;
-                callbackResp();
+                respObj.arr = res.rows;
+                callbackResp(respObj);
             }
         });
     }

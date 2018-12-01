@@ -155,12 +155,12 @@ app.get('/api/users', (request, response) => {
         arr: []
     };
 
-    qm.request("SELECT * FROM people ORDER BY u_id ASC;", ans,
+    qm.request("SELECT * FROM people ORDER BY u_id ASC;", [],
         (err) => {
             Object(__WEBPACK_IMPORTED_MODULE_3__debugLog__["a" /* default */])("err api");
             Object(__WEBPACK_IMPORTED_MODULE_3__debugLog__["a" /* default */])(err);
         },
-        () => {
+        (ans) => {
             const answer = ans.arr;
             response.end(JSON.stringify(answer));
             console.log("get ans");
@@ -189,24 +189,24 @@ app.post('/api/users', (request, response) => {
             arr: []
         };
 
-        qm.request(`SELECT * FROM people WHERE u_nickname = '${nickname}';`, ans,
+        qm.request(`SELECT * FROM people WHERE u_nickname = $1;`, [nickname],
             (err) => {
                 Object(__WEBPACK_IMPORTED_MODULE_3__debugLog__["a" /* default */])("NO_ADDING_ERROR_SELECT");
                 Object(__WEBPACK_IMPORTED_MODULE_3__debugLog__["a" /* default */])(err);
             },
-            () => {
+            (ans) => {
                 if(ans.arr.length > 0) {
                     const answer = {
                         message: "NO_ADDING_ALREADY_EXIST"
                     };
                     response.end(JSON.stringify(answer));
                 } else {
-                    qm.request(`INSERT INTO people (u_nickname, u_password) VALUES ('${nickname}', '${password}');`, {},
+                    qm.request(`INSERT INTO people (u_nickname, u_password) VALUES ($1, $2);`, [nickname, password],
                         (err) => {
                             Object(__WEBPACK_IMPORTED_MODULE_3__debugLog__["a" /* default */])("NO_ADDING_ERROR_INSERT");
                             Object(__WEBPACK_IMPORTED_MODULE_3__debugLog__["a" /* default */])(err);
                         },
-                        () => {
+                        (ans) => {
                         const answer = {
                             message: "ADDING_SUCCESS"
                         };
@@ -251,16 +251,22 @@ class QueryMaker {
         this.pool = pool;
     }
 
-    request(queryString, resultObj, callbackError, callbackResp) {
+    // const text = 'INSERT INTO users(name, email) VALUES($1, $2) RETURNING *'
+    // const values = ['brianc', 'brian.m.carlson@gmail.com']
+
+    request(queryString, values, callbackError, callbackResp) {
         const pool = this.pool;
-        pool.query(queryString, [], (err, res) => {
+        let respObj = {
+            arr: []
+        };
+        pool.query(queryString, values, (err, res) => {
             if(err !== null) {
                 Object(__WEBPACK_IMPORTED_MODULE_0__debugLog__["a" /* default */])("callbackError");
                 callbackError(err);
             } else {
                 Object(__WEBPACK_IMPORTED_MODULE_0__debugLog__["a" /* default */])("callbackNormal");
-                resultObj.arr = res.rows;
-                callbackResp();
+                respObj.arr = res.rows;
+                callbackResp(respObj);
             }
         });
     }

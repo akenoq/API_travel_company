@@ -45,12 +45,12 @@ app.get('/api/users', (request, response) => {
         arr: []
     };
 
-    qm.request("SELECT * FROM people ORDER BY u_id ASC;", ans,
+    qm.request("SELECT * FROM people ORDER BY u_id ASC;", [],
         (err) => {
             debugLog("err api");
             debugLog(err);
         },
-        () => {
+        (ans) => {
             const answer = ans.arr;
             response.end(JSON.stringify(answer));
             console.log("get ans");
@@ -75,28 +75,24 @@ app.post('/api/users', (request, response) => {
         const citizenship = dataObj.citizenship;
         const phone = dataObj.phone;
 
-        let ans = {
-            arr: []
-        };
-
-        qm.request(`SELECT * FROM people WHERE u_nickname = '${nickname}';`, ans,
+        qm.request(`SELECT * FROM people WHERE u_nickname = $1;`, [nickname],
             (err) => {
                 debugLog("NO_ADDING_ERROR_SELECT");
                 debugLog(err);
             },
-            () => {
+            (ans) => {
                 if(ans.arr.length > 0) {
                     const answer = {
                         message: "NO_ADDING_ALREADY_EXIST"
                     };
                     response.end(JSON.stringify(answer));
                 } else {
-                    qm.request(`INSERT INTO people (u_nickname, u_password) VALUES ('${nickname}', '${password}');`, {},
+                    qm.request(`INSERT INTO people (u_nickname, u_password) VALUES ($1, $2);`, [nickname, password],
                         (err) => {
                             debugLog("NO_ADDING_ERROR_INSERT");
                             debugLog(err);
                         },
-                        () => {
+                        (ans) => {
                         const answer = {
                             message: "ADDING_SUCCESS"
                         };
